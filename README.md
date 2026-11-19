@@ -1,6 +1,6 @@
-# Unity Catalog Delta SDP
+# Unity Catalog Delta SDP with DuckDB
 
-A sample medallion data pipeline built with Apache Spark Declarative Pipelines (SDP), Spark Connect, Delta Lake, and Unity Catalog. The pipeline ingests store sales, customer, item, and store data into bronze, cleans and enriches it in silver, and produces sales and customer analytics in gold.
+A sample medallion data pipeline built with Apache Spark Declarative Pipelines (SDP), Spark Connect, Delta Lake, and Unity Catalog, with DuckDB for querying Unity Catalog tables. The pipeline ingests store sales, customer, item, and store data into bronze, cleans and enriches it in silver, and produces sales and customer analytics in gold. DuckDB can attach the Unity Catalog and query the resulting Delta tables directly.
 
 ## Architecture
 
@@ -123,6 +123,70 @@ After a successful update, verify the output tables in Unity Catalog or query th
 SELECT * FROM demo.sdp_gold.gold_sales_summary;
 SELECT * FROM demo.sdp_gold.gold_customer_analytics;
 ```
+
+## 8. Query Unity Catalog tables from DuckDB
+
+DuckDB can attach the local Unity Catalog and query its Delta tables. Keep the Unity Catalog server running, then install DuckDB for your platform and start the DuckDB CLI:
+
+```bash
+duckdb
+```
+
+At the DuckDB prompt, install and load the Unity Catalog extension, create a secret for the local Unity Catalog endpoint, and attach the `demo` catalog. The token below matches the local static token used by the Spark Connect server:
+
+```sql
+INSTALL unity_catalog;
+LOAD unity_catalog;
+
+CREATE SECRET (
+    TYPE unity_catalog,
+    TOKEN 'not-used',
+    ENDPOINT 'http://localhost:8080'
+);
+
+ATTACH 'demo' AS demo_uc_demo (
+    TYPE unity_catalog,
+    DEFAULT_SCHEMA 'default'
+);
+```
+
+Query the customer table shown in this example:
+
+```sql
+SELECT *
+FROM demo_uc_demo.default.demo_customers_sdp;
+```
+
+You can also query the gold tables produced by this project:
+
+```sql
+SELECT *
+FROM demo_uc_demo.sdp_gold.gold_sales_summary;
+
+SELECT *
+FROM demo_uc_demo.sdp_gold.gold_customer_analytics;
+```
+
+The rows returned are the rows stored in the table. If the same customer appears multiple times, inspect repeated values with:
+
+```sql
+SELECT id, name, age, COUNT(*) AS row_count
+FROM demo_uc_demo.default.demo_customers_sdp
+GROUP BY id, name, age
+HAVING COUNT(*) > 1;
+```
+
+Detaching and attaching the catalog again does not remove or deduplicate rows; it reconnects DuckDB to Unity Catalog. To reconnect after a table changes, run:
+
+```sql
+DETACH demo_uc_demo;
+ATTACH 'demo' AS demo_uc_demo (
+    TYPE unity_catalog,
+    DEFAULT_SCHEMA 'default'
+);
+```
+
+This local example uses the Unity Catalog OSS endpoint and its static development token. For cloud storage or another deployment, configure the required catalog and storage credentials for that environment.
 
 ## Configuration notes
 
