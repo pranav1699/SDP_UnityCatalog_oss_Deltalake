@@ -1,0 +1,11 @@
+
+name: demo_sdp_uc
+catalog: demo
+database: default
+storage: file:///Users/pranavsadagopan/projects/uc_delta_sdp/demo_sdp_uc/pipeline-storage
+libraries:
+  - glob:
+      include: transformations/**
+configuration:
+  spark.remote: sc://localhost:15002
+  spark.sql.sources.default: delta

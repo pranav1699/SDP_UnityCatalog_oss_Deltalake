@@ -1,0 +1,13 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Generated pipeline state and checkpoints
+demo_sdp_uc/pipeline-storage/
+
+# Python bytecode and cache directories
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
