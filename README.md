@@ -1,4 +1,4 @@
-# UC Delta SDP
+# Unity Catalog Delta SDP
 
 A sample medallion data pipeline built with Apache Spark Declarative Pipelines (SDP), Spark Connect, Delta Lake, and Unity Catalog. The pipeline ingests store sales, customer, item, and store data into bronze, cleans and enriches it in silver, and produces sales and customer analytics in gold.
 
